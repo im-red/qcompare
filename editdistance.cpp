@@ -86,12 +86,12 @@ std::vector<EditOperation> articleEditOperations(const QStringList &fromList, co
             bool needReplace = fromList[i - 1] != toList[j - 1];
             int ifReplace = distance[index(i - 1, j - 1)] + (needReplace ? 1 : 0);
 
-            if (ifAdd < ifRemove && ifAdd < ifReplace)
+            if (ifAdd <= ifRemove && ifAdd <= ifReplace)
             {
                 distance[index(i, j)] = ifAdd;
                 operations[index(i, j)] = Add;
             }
-            else if (ifRemove < ifAdd && ifRemove < ifReplace)
+            else if (ifRemove <= ifAdd && ifRemove <= ifReplace)
             {
                 distance[index(i, j)] = ifRemove;
                 operations[index(i, j)] = Remove;
