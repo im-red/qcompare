@@ -137,9 +137,6 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
     int fromIndex = 0;
     int toIndex = 0;
 
-    int fromLen = fromList.size();
-    int toLen = toList.size();
-
     m_leftRawText.clear();
     m_rightRawText.clear();
 
@@ -158,16 +155,15 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
         {
             leftCursor.setBlockFormat(m_nopFormat);
             leftCursor.insertText(fromList[fromIndex]);
-            if (fromIndex != fromLen - 1)
-            {
-                leftCursor.insertText(TEXTEDIT_DELIMITER);
-            }
+
+            leftCursor.insertText(TEXTEDIT_DELIMITER);
+            leftCursor.setBlockFormat(m_nopFormat);
+
             rightCursor.setBlockFormat(m_nopFormat);
             rightCursor.insertText(toList[toIndex]);
-            if (toIndex != toLen - 1)
-            {
-                rightCursor.insertText(TEXTEDIT_DELIMITER);
-            }
+
+            rightCursor.insertText(TEXTEDIT_DELIMITER);
+            rightCursor.setBlockFormat(m_nopFormat);
 
             fromIndex++;
             toIndex++;
@@ -176,12 +172,13 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
         {
             leftCursor.setBlockFormat(m_emptyFormat);
             leftCursor.insertText(MANUAL_DELIMITER);
+            leftCursor.setBlockFormat(m_nopFormat);
+
             rightCursor.setBlockFormat(m_addFormat);
             rightCursor.insertText(toList[toIndex]);
-            if (toIndex != toLen - 1)
-            {
-                rightCursor.insertText(TEXTEDIT_DELIMITER);
-            }
+
+            rightCursor.insertText(TEXTEDIT_DELIMITER);
+            rightCursor.setBlockFormat(m_nopFormat);
 
             toIndex++;
         }
@@ -189,12 +186,13 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
         {
             leftCursor.setBlockFormat(m_removeFormat);
             leftCursor.insertText(fromList[fromIndex]);
-            if (fromIndex != fromLen - 1)
-            {
-                leftCursor.insertText(TEXTEDIT_DELIMITER);
-            }
+
+            leftCursor.insertText(TEXTEDIT_DELIMITER);
+            leftCursor.setBlockFormat(m_nopFormat);
+
             rightCursor.setBlockFormat(m_emptyFormat);
             rightCursor.insertText(MANUAL_DELIMITER);
+            rightCursor.setBlockFormat(m_nopFormat);
 
             fromIndex++;
         }
@@ -202,16 +200,15 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
         {
             leftCursor.setBlockFormat(m_replaceFormat);
             leftCursor.insertText(fromList[fromIndex]);
-            if (fromIndex != fromLen - 1)
-            {
-                leftCursor.insertText(TEXTEDIT_DELIMITER);
-            }
+
+            leftCursor.insertText(TEXTEDIT_DELIMITER);
+            leftCursor.setBlockFormat(m_nopFormat);
+
             rightCursor.setBlockFormat(m_replaceFormat);
             rightCursor.insertText(toList[toIndex]);
-            if (toIndex != toLen - 1)
-            {
-                rightCursor.insertText(TEXTEDIT_DELIMITER);
-            }
+
+            rightCursor.insertText(TEXTEDIT_DELIMITER);
+            rightCursor.setBlockFormat(m_nopFormat);
 
             fromIndex++;
             toIndex++;
@@ -232,6 +229,7 @@ void MainWindow::initWidget()
     ui->diffButton->setChecked(false);
     ui->editButton->setCheckable(true);
     ui->editButton->setChecked(true);
+    ui->editButton->setEnabled(false);
 }
 
 void MainWindow::initConnection()
