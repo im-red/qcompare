@@ -1,10 +1,12 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "editdistance.h"
+#include "myersdiff.h"
 #include <QDebug>
 #include <QAbstractSlider>
 #include <QScrollBar>
 #include <utility>
+#include <QDate>
 
 const QChar MainWindow::TEXTEDIT_DELIMITER = QChar(0x2029);
 const QChar MainWindow::MANUAL_DELIMITER = QChar(0x2029);
@@ -22,9 +24,9 @@ static std::map<EditOperation, QString> Operation2String
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_isShowing(false)
 {
     ui->setupUi(this);
+    showMaximized();
 
     initWidget();
     initConnection();
@@ -63,14 +65,12 @@ void MainWindow::on_editButton_clicked()
 void MainWindow::enterDiff()
 {
     QString leftText = convertFromRawToPlain(ui->leftEdit->document()->toRawText());
-    qDebug() << "left:" << leftText;
     if (leftText != m_leftPlainText)
     {
         m_leftPlainText = std::move(leftText);
     }
 
     QString rightText = convertFromRawToPlain(ui->rightEdit->document()->toRawText());
-    qDebug() << "right:" << rightText;
     if (rightText != m_rightPlainText)
     {
         m_rightPlainText = rightText;
@@ -121,27 +121,25 @@ void MainWindow::doDiff()
     qDebug() << toList;
     qDebug() << "----------";
 
-    auto ops = articleEditOperations(fromList, toList);
-    for (auto op : ops)
-    {
-        qDebug() << Operation2String[op];
-    }
+    QTime timer;
 
-    showDiff(ops, fromList, toList);
+    timer.start();
+    auto diffText = myersDiff(fromList, toList);
+    //auto ops = articleEditOperations(fromList, toList);
+    int diffTime = timer.elapsed();
+
+    timer.restart();
+    showDiff(diffText);
+    //showDiff(ops, fromList, toList);
+    int showTime = timer.elapsed();
+
+    statusBar()->showMessage(QString("diff time: %1s show time: %2s").arg(diffTime * 0.001).arg(showTime * 0.001));
 }
 
 void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringList &fromList, const QStringList &toList)
 {
-    m_isShowing = true;
-
     int fromIndex = 0;
     int toIndex = 0;
-
-    m_leftRawText.clear();
-    m_rightRawText.clear();
-
-    m_leftRawText.reserve(m_leftPlainText.size() + ops.size());
-    m_rightRawText.reserve(m_rightPlainText.size() + ops.size());
 
     ui->leftEdit->clear();
     ui->rightEdit->clear();
@@ -153,17 +151,17 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
     {
         if (op == Nop)
         {
-            leftCursor.setBlockFormat(m_nopFormat);
+            leftCursor.setBlockFormat(m_equalFormat);
             leftCursor.insertText(fromList[fromIndex]);
 
             leftCursor.insertText(TEXTEDIT_DELIMITER);
-            leftCursor.setBlockFormat(m_nopFormat);
+            leftCursor.setBlockFormat(m_equalFormat);
 
-            rightCursor.setBlockFormat(m_nopFormat);
+            rightCursor.setBlockFormat(m_equalFormat);
             rightCursor.insertText(toList[toIndex]);
 
             rightCursor.insertText(TEXTEDIT_DELIMITER);
-            rightCursor.setBlockFormat(m_nopFormat);
+            rightCursor.setBlockFormat(m_equalFormat);
 
             fromIndex++;
             toIndex++;
@@ -172,13 +170,13 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
         {
             leftCursor.setBlockFormat(m_emptyFormat);
             leftCursor.insertText(MANUAL_DELIMITER);
-            leftCursor.setBlockFormat(m_nopFormat);
+            leftCursor.setBlockFormat(m_equalFormat);
 
             rightCursor.setBlockFormat(m_addFormat);
             rightCursor.insertText(toList[toIndex]);
 
             rightCursor.insertText(TEXTEDIT_DELIMITER);
-            rightCursor.setBlockFormat(m_nopFormat);
+            rightCursor.setBlockFormat(m_equalFormat);
 
             toIndex++;
         }
@@ -188,11 +186,11 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
             leftCursor.insertText(fromList[fromIndex]);
 
             leftCursor.insertText(TEXTEDIT_DELIMITER);
-            leftCursor.setBlockFormat(m_nopFormat);
+            leftCursor.setBlockFormat(m_equalFormat);
 
             rightCursor.setBlockFormat(m_emptyFormat);
             rightCursor.insertText(MANUAL_DELIMITER);
-            rightCursor.setBlockFormat(m_nopFormat);
+            rightCursor.setBlockFormat(m_equalFormat);
 
             fromIndex++;
         }
@@ -202,20 +200,24 @@ void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringLi
             leftCursor.insertText(fromList[fromIndex]);
 
             leftCursor.insertText(TEXTEDIT_DELIMITER);
-            leftCursor.setBlockFormat(m_nopFormat);
+            leftCursor.setBlockFormat(m_equalFormat);
 
             rightCursor.setBlockFormat(m_replaceFormat);
             rightCursor.insertText(toList[toIndex]);
 
             rightCursor.insertText(TEXTEDIT_DELIMITER);
-            rightCursor.setBlockFormat(m_nopFormat);
+            rightCursor.setBlockFormat(m_equalFormat);
 
             fromIndex++;
             toIndex++;
         }
     }
+}
 
-    m_isShowing = false;
+void MainWindow::showDiff(const DiffText &text)
+{
+    setDiffLines2Edit(text.fromText, ui->leftEdit);
+    setDiffLines2Edit(text.toText, ui->rightEdit);
 }
 
 void MainWindow::initWidget()
@@ -270,9 +272,49 @@ void MainWindow::initConnection()
 
 void MainWindow::initTextFormat()
 {
-    m_nopFormat.setBackground(QBrush(Qt::white));
+    m_equalFormat.setBackground(QBrush(Qt::white));
     m_addFormat.setBackground(QBrush(QColor(0xc8, 0xe6, 0xc9)));
     m_removeFormat.setBackground(QBrush(QColor(0xff, 0xcd, 0xd2)));
     m_replaceFormat.setBackground(QBrush(QColor(0xff, 0xf9, 0xc4)));
     m_emptyFormat.setBackground(QBrush(QColor(0xe0, 0xe0, 0xe0)));
+}
+
+void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine> > &lines, QPlainTextEdit *edit)
+{
+    edit->clear();
+    QTextCursor cursor(edit->document());
+
+    int length = static_cast<int>(lines.size());
+    for (int i = 0; i < length; i++)
+    {
+        auto &sp = lines[i];
+        switch(sp->type())
+        {
+        case DiffLine::Empty:
+            cursor.setBlockFormat(m_emptyFormat);
+            break;
+        case DiffLine::Equal:
+            cursor.setBlockFormat(m_equalFormat);
+            cursor.insertText(*(sp->string()));
+            break;
+        case DiffLine::Add:
+            cursor.setBlockFormat(m_addFormat);
+            cursor.insertText(*(sp->string()));
+            break;
+        case DiffLine::Remove:
+            cursor.setBlockFormat(m_removeFormat);
+            cursor.insertText(*(sp->string()));
+            break;
+        case DiffLine::Replace:
+            assert(false);
+            break;
+        default:
+            assert(false);
+            break;
+        }
+        if (i != length - 1)
+        {
+            cursor.insertText(MANUAL_DELIMITER);
+        }
+    }
 }

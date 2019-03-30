@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "editdistance.h"
+#include "difftext.h"
 
 #include <QMainWindow>
 #include <QString>
@@ -10,6 +11,8 @@
 namespace Ui {
 class MainWindow;
 }
+
+class QPlainTextEdit;
 
 class MainWindow : public QMainWindow
 {
@@ -35,9 +38,12 @@ private:
     static QString convertFromRawToPlain(const QString &raw);
     void doDiff();
     void showDiff(const std::vector<EditOperation> &ops, const QStringList &fromList, const QStringList &toList);
+    void showDiff(const DiffText &text);
     void initWidget();
     void initConnection();
     void initTextFormat();
+
+    void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine>> &lines, QPlainTextEdit *edit);
 
 private:
     Ui::MainWindow *ui;
@@ -53,9 +59,7 @@ private:
     QString m_leftRawText;
     QString m_rightRawText;
 
-    bool m_isShowing;
-
-    QTextBlockFormat m_nopFormat;
+    QTextBlockFormat m_equalFormat;
     QTextBlockFormat m_addFormat;
     QTextBlockFormat m_removeFormat;
     QTextBlockFormat m_replaceFormat;
