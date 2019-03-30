@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "editdistance.h"
 #include "difftext.h"
 
 #include <QMainWindow>
@@ -17,12 +16,6 @@ class QPlainTextEdit;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-public:
-    enum Side
-    {
-        LeftSide,
-        RightSide
-    };
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
@@ -35,12 +28,11 @@ private slots:
 private:
     void enterDiff();
     void enterEdit();
-    static QString convertFromRawToPlain(const QString &raw);
     void doDiff();
-    void showDiff(const std::vector<EditOperation> &ops, const QStringList &fromList, const QStringList &toList);
     void showDiff(const DiffText &text);
     void initWidget();
-    void initConnection();
+    void connectScroll();
+    void disconnectScroll();
     void initTextFormat();
 
     void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine>> &lines, QPlainTextEdit *edit);
@@ -49,9 +41,7 @@ private:
     Ui::MainWindow *ui;
 
     const static QChar TEXTEDIT_DELIMITER;
-    const static QChar ACTUAL_DELIMITER;
-    const static QChar MANUAL_DELIMITER;
-    const static QChar ESCAPE_CHAR;
+    const static QChar STRING_DELIMITER;
 
     QString m_leftPlainText;
     QString m_rightPlainText;
@@ -64,6 +54,11 @@ private:
     QTextBlockFormat m_removeFormat;
     QTextBlockFormat m_replaceFormat;
     QTextBlockFormat m_emptyFormat;
+
+    QMetaObject::Connection m_vLeft2Right;
+    QMetaObject::Connection m_vRight2Left;
+    QMetaObject::Connection m_hLeft2Right;
+    QMetaObject::Connection m_hRight2Left;
 };
 
 #endif // MAINWINDOW_H

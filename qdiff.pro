@@ -27,14 +27,12 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    editdistance.cpp \
     diffline.cpp \
     difftext.cpp \
     myersdiff.cpp
 
 HEADERS += \
         mainwindow.h \
-    editdistance.h \
     diffline.h \
     difftext.h \
     myersdiff.h

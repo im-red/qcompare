@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "editdistance.h"
 #include "myersdiff.h"
 #include <QDebug>
 #include <QAbstractSlider>
@@ -9,17 +8,7 @@
 #include <QDate>
 
 const QChar MainWindow::TEXTEDIT_DELIMITER = QChar(0x2029);
-const QChar MainWindow::MANUAL_DELIMITER = QChar(0x2029);
-const QChar MainWindow::ACTUAL_DELIMITER = '\n';
-const QChar MainWindow::ESCAPE_CHAR = QChar(0x0);
-
-static std::map<EditOperation, QString> Operation2String
-{
-    { Nop, "Nop" },
-    { Add, "Add" },
-    { Remove, "Remove" },
-    { Replace, "Replace" },
-};
+const QChar MainWindow::STRING_DELIMITER = '\n';
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -29,7 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
     showMaximized();
 
     initWidget();
-    initConnection();
     initTextFormat();
 }
 
@@ -47,7 +35,15 @@ void MainWindow::on_diffButton_clicked()
     ui->leftEdit->setReadOnly(true);
     ui->rightEdit->setReadOnly(true);
 
+    ui->leftEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    connectScroll();
+
+    QTime timer;
+    timer.start();
     enterDiff();
+    int totalTime = timer.elapsed();
+    statusBar()->showMessage(QString("%1 total time: %2s").arg(statusBar()->currentMessage()).arg(totalTime * 0.001));
 }
 
 void MainWindow::on_editButton_clicked()
@@ -59,22 +55,21 @@ void MainWindow::on_editButton_clicked()
     ui->leftEdit->setReadOnly(false);
     ui->rightEdit->setReadOnly(false);
 
+    ui->leftEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    disconnectScroll();
+
     enterEdit();
 }
 
 void MainWindow::enterDiff()
 {
-    QString leftText = convertFromRawToPlain(ui->leftEdit->document()->toRawText());
-    if (leftText != m_leftPlainText)
-    {
-        m_leftPlainText = std::move(leftText);
-    }
-
-    QString rightText = convertFromRawToPlain(ui->rightEdit->document()->toRawText());
-    if (rightText != m_rightPlainText)
-    {
-        m_rightPlainText = rightText;
-    }
+    QTime timer;
+    timer.start();
+    m_leftPlainText = ui->leftEdit->toPlainText();
+    m_rightPlainText = ui->rightEdit->toPlainText();
+    int readTime = timer.elapsed();
+    statusBar()->showMessage(QString("read time: %1s").arg(readTime * 0.001));
 
     doDiff();
 }
@@ -85,133 +80,22 @@ void MainWindow::enterEdit()
     ui->rightEdit->setPlainText(m_rightPlainText);
 }
 
-QString MainWindow::convertFromRawToPlain(const QString &raw)
-{
-    QString result;
-    result.reserve(raw.size());
-
-    QChar prevChar(0);
-
-    int rawLen = raw.size();
-    for (int i = 0; i < rawLen; i++)
-    {
-        QChar c = raw[i];
-
-        if (c == TEXTEDIT_DELIMITER)
-        {
-            result += ACTUAL_DELIMITER;
-        }
-        else
-        {
-            result += c;
-        }
-
-        prevChar = c;
-    }
-    return result;
-}
-
 void MainWindow::doDiff()
 {
-    QStringList fromList = m_leftPlainText.split(ACTUAL_DELIMITER);
-    QStringList toList = m_rightPlainText.split(ACTUAL_DELIMITER);
-
-    qDebug() << "----------";
-    qDebug() << fromList;
-    qDebug() << toList;
-    qDebug() << "----------";
+    QStringList fromList = m_leftPlainText.split(STRING_DELIMITER);
+    QStringList toList = m_rightPlainText.split(STRING_DELIMITER);
 
     QTime timer;
 
     timer.start();
     auto diffText = myersDiff(fromList, toList);
-    //auto ops = articleEditOperations(fromList, toList);
     int diffTime = timer.elapsed();
 
     timer.restart();
     showDiff(diffText);
-    //showDiff(ops, fromList, toList);
     int showTime = timer.elapsed();
 
-    statusBar()->showMessage(QString("diff time: %1s show time: %2s").arg(diffTime * 0.001).arg(showTime * 0.001));
-}
-
-void MainWindow::showDiff(const std::vector<EditOperation> &ops, const QStringList &fromList, const QStringList &toList)
-{
-    int fromIndex = 0;
-    int toIndex = 0;
-
-    ui->leftEdit->clear();
-    ui->rightEdit->clear();
-
-    QTextCursor leftCursor(ui->leftEdit->document());
-    QTextCursor rightCursor(ui->rightEdit->document());
-
-    for (auto op : ops)
-    {
-        if (op == Nop)
-        {
-            leftCursor.setBlockFormat(m_equalFormat);
-            leftCursor.insertText(fromList[fromIndex]);
-
-            leftCursor.insertText(TEXTEDIT_DELIMITER);
-            leftCursor.setBlockFormat(m_equalFormat);
-
-            rightCursor.setBlockFormat(m_equalFormat);
-            rightCursor.insertText(toList[toIndex]);
-
-            rightCursor.insertText(TEXTEDIT_DELIMITER);
-            rightCursor.setBlockFormat(m_equalFormat);
-
-            fromIndex++;
-            toIndex++;
-        }
-        else if (op == Add)
-        {
-            leftCursor.setBlockFormat(m_emptyFormat);
-            leftCursor.insertText(MANUAL_DELIMITER);
-            leftCursor.setBlockFormat(m_equalFormat);
-
-            rightCursor.setBlockFormat(m_addFormat);
-            rightCursor.insertText(toList[toIndex]);
-
-            rightCursor.insertText(TEXTEDIT_DELIMITER);
-            rightCursor.setBlockFormat(m_equalFormat);
-
-            toIndex++;
-        }
-        else if (op == Remove)
-        {
-            leftCursor.setBlockFormat(m_removeFormat);
-            leftCursor.insertText(fromList[fromIndex]);
-
-            leftCursor.insertText(TEXTEDIT_DELIMITER);
-            leftCursor.setBlockFormat(m_equalFormat);
-
-            rightCursor.setBlockFormat(m_emptyFormat);
-            rightCursor.insertText(MANUAL_DELIMITER);
-            rightCursor.setBlockFormat(m_equalFormat);
-
-            fromIndex++;
-        }
-        else // op == replace
-        {
-            leftCursor.setBlockFormat(m_replaceFormat);
-            leftCursor.insertText(fromList[fromIndex]);
-
-            leftCursor.insertText(TEXTEDIT_DELIMITER);
-            leftCursor.setBlockFormat(m_equalFormat);
-
-            rightCursor.setBlockFormat(m_replaceFormat);
-            rightCursor.insertText(toList[toIndex]);
-
-            rightCursor.insertText(TEXTEDIT_DELIMITER);
-            rightCursor.setBlockFormat(m_equalFormat);
-
-            fromIndex++;
-            toIndex++;
-        }
-    }
+    statusBar()->showMessage(QString("%1 diff time: %2s  show time: %3s").arg(statusBar()->currentMessage()).arg(diffTime * 0.001).arg(showTime * 0.001));
 }
 
 void MainWindow::showDiff(const DiffText &text)
@@ -225,8 +109,6 @@ void MainWindow::initWidget()
     ui->leftEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
     ui->rightEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
 
-    ui->leftEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
     ui->diffButton->setCheckable(true);
     ui->diffButton->setChecked(false);
     ui->editButton->setCheckable(true);
@@ -234,9 +116,9 @@ void MainWindow::initWidget()
     ui->editButton->setEnabled(false);
 }
 
-void MainWindow::initConnection()
+void MainWindow::connectScroll()
 {
-    connect(ui->leftEdit->verticalScrollBar(), &QAbstractSlider::valueChanged,
+    m_vLeft2Right = connect(ui->leftEdit->verticalScrollBar(), &QAbstractSlider::valueChanged,
             [this](int value)
             {
                 if (ui->rightEdit->verticalScrollBar()->value() != value)
@@ -244,7 +126,7 @@ void MainWindow::initConnection()
                     ui->rightEdit->verticalScrollBar()->setValue(value);
                 }
             });
-    connect(ui->rightEdit->verticalScrollBar(), &QAbstractSlider::valueChanged,
+    m_vRight2Left = connect(ui->rightEdit->verticalScrollBar(), &QAbstractSlider::valueChanged,
             [this](int value)
             {
                 if (ui->leftEdit->verticalScrollBar()->value() != value)
@@ -252,7 +134,7 @@ void MainWindow::initConnection()
                     ui->leftEdit->verticalScrollBar()->setValue(value);
                 }
             });
-    connect(ui->leftEdit->horizontalScrollBar(), &QAbstractSlider::valueChanged,
+    m_hLeft2Right = connect(ui->leftEdit->horizontalScrollBar(), &QAbstractSlider::valueChanged,
             [this](int value)
             {
                 if (ui->rightEdit->horizontalScrollBar()->value() != value)
@@ -260,7 +142,7 @@ void MainWindow::initConnection()
                     ui->rightEdit->horizontalScrollBar()->setValue(value);
                 }
             });
-    connect(ui->rightEdit->horizontalScrollBar(), &QAbstractSlider::valueChanged,
+    m_hRight2Left = connect(ui->rightEdit->horizontalScrollBar(), &QAbstractSlider::valueChanged,
             [this](int value)
             {
                 if (ui->leftEdit->horizontalScrollBar()->value() != value)
@@ -268,6 +150,14 @@ void MainWindow::initConnection()
                     ui->leftEdit->horizontalScrollBar()->setValue(value);
                 }
     });
+}
+
+void MainWindow::disconnectScroll()
+{
+    disconnect(m_vLeft2Right);
+    disconnect(m_vRight2Left);
+    disconnect(m_hLeft2Right);
+    disconnect(m_hRight2Left);
 }
 
 void MainWindow::initTextFormat()
@@ -314,7 +204,7 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine> >
         }
         if (i != length - 1)
         {
-            cursor.insertText(MANUAL_DELIMITER);
+            cursor.insertText(TEXTEDIT_DELIMITER);
         }
     }
 }
