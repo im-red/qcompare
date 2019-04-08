@@ -1,0 +1,9 @@
+2019.04.03 22:42:43.880 Event A(1234567890) The problems of finding a longest common subsequence
+2019.04.03 22:42:43.880 Event BD(1234567890) of two sequences A and B and a
+2019.04.03 22:42:43.880 Event C(1234567890) shortest edit script for transforming A into B have long been known to be dual problems
+2019.04.03 22:42:43.880 Event K(1234567890) equivalent to finding a shortest/longest path
+2019.04.03 22:42:43.880 Event RZ(1234567890) in an edit graph. Using this perspective
+2019.04.03 22:42:43.880 Event D(1234567890) a simple O(ND) time
+2019.04.03 22:42:43.880 Event E(1234567890) and space algorithm is developed
+2019.04.03 22:42:43.880 Event X(23592450) where N is the sum of the lengths of A and B
+2019.04.03 22:42:43.880 Event Y(23452394) and D is the size of the minimum edit script for A and B
