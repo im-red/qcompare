@@ -10,6 +10,11 @@
     <height>300</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>WenQuanYi Zen Hei</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>qdiff</string>
   </property>
@@ -57,7 +62,7 @@
      <x>0</x>
      <y>0</y>
      <width>400</width>
-     <height>26</height>
+     <height>29</height>
     </rect>
    </property>
   </widget>
