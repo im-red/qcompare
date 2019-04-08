@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <map>
+#include <assert.h>
 
 using namespace std;
 
@@ -172,7 +173,8 @@ static DiffText convertPath2DiffText(const std::vector<Snake> &path, const QStri
     fromIndex += equalPrefix;
     toIndex += equalPrefix;
 
-    for (int i = 1; i < path.size(); i++)
+    int length = path.size();
+    for (int i = 1; i < length; i++)
     {
         Snake s = path[i];
 

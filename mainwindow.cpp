@@ -4,8 +4,11 @@
 #include <QDebug>
 #include <QAbstractSlider>
 #include <QScrollBar>
-#include <utility>
 #include <QDate>
+#include <QTextCodec>
+#include <QFile>
+#include <utility>
+#include <assert.h>
 
 const QChar MainWindow::TEXTEDIT_DELIMITER = QChar(0x2029);
 const QChar MainWindow::STRING_DELIMITER = '\n';
@@ -174,6 +177,8 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine> >
     edit->clear();
     QTextCursor cursor(edit->document());
 
+    cursor.beginEditBlock();
+
     int length = static_cast<int>(lines.size());
     for (int i = 0; i < length; i++)
     {
@@ -207,4 +212,6 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine> >
             cursor.insertText(TEXTEDIT_DELIMITER);
         }
     }
+
+    cursor.endEditBlock();
 }
