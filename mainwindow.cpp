@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "myersdiff.h"
+#include "editdistance.h"
 #include <QDebug>
 #include <QAbstractSlider>
 #include <QScrollBar>
@@ -65,6 +66,24 @@ void MainWindow::on_editButton_clicked()
     enterEdit();
 }
 
+void MainWindow::on_onlyDiff_toggled(bool checked)
+{
+    if (checked)
+    {
+        ui->preferLabel->setEnabled(false);
+        ui->qualityLabel->setEnabled(false);
+        ui->speedLabel->setEnabled(false);
+        ui->preferSlider->setEnabled(false);
+    }
+    else
+    {
+        ui->preferLabel->setEnabled(true);
+        ui->qualityLabel->setEnabled(true);
+        ui->speedLabel->setEnabled(true);
+        ui->preferSlider->setEnabled(true);
+    }
+}
+
 void MainWindow::enterDiff()
 {
     QTime timer;
@@ -91,7 +110,7 @@ void MainWindow::doDiff()
     QTime timer;
 
     timer.start();
-    auto diffText = myersDiff(fromList, toList);
+    auto diffText = calculateDiff(fromList, toList);
     int diffTime = timer.elapsed();
 
     timer.restart();
@@ -101,7 +120,36 @@ void MainWindow::doDiff()
     statusBar()->showMessage(QString("%1 diff time: %2s  show time: %3s").arg(statusBar()->currentMessage()).arg(diffTime * 0.001).arg(showTime * 0.001));
 }
 
-void MainWindow::showDiff(const DiffText &text)
+DiffText<QString> MainWindow::calculateDiff(const QStringList &fromList, const QStringList &toList)
+{
+    if (ui->onlyDiff->isChecked())
+    {
+        return myersDiff(fromList, toList);
+    }
+    else
+    {
+        int preferValue = ui->preferSlider->value();
+        if (preferValue == 0)
+        {
+            return editDistance(fromList, toList, lcsCost<QString>);
+        }
+        else if (preferValue == 1)
+        {
+            return myersDiff(fromList, toList, lcsCompare<QString>);
+        }
+        else if (preferValue == 2)
+        {
+            return myersDiff(fromList, toList, affixCompare<QString>);
+        }
+        else
+        {
+            // this won't happen
+            return DiffText<QString>();
+        }
+    }
+}
+
+void MainWindow::showDiff(const DiffText<QString> &text)
 {
     setDiffLines2Edit(text.fromText, ui->leftEdit);
     setDiffLines2Edit(text.toText, ui->rightEdit);
@@ -172,7 +220,7 @@ void MainWindow::initTextFormat()
     m_emptyFormat.setBackground(QBrush(QColor(0xe0, 0xe0, 0xe0)));
 }
 
-void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine> > &lines, QPlainTextEdit *edit)
+void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>> > &lines, QPlainTextEdit *edit)
 {
     edit->clear();
     QTextCursor cursor(edit->document());
@@ -185,23 +233,24 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine> >
         auto &sp = lines[i];
         switch(sp->type())
         {
-        case DiffLine::Empty:
+        case LineType::Empty:
             cursor.setBlockFormat(m_emptyFormat);
             break;
-        case DiffLine::Equal:
+        case LineType::Equal:
             cursor.setBlockFormat(m_equalFormat);
             cursor.insertText(*(sp->string()));
             break;
-        case DiffLine::Add:
+        case LineType::Add:
             cursor.setBlockFormat(m_addFormat);
             cursor.insertText(*(sp->string()));
             break;
-        case DiffLine::Remove:
+        case LineType::Remove:
             cursor.setBlockFormat(m_removeFormat);
             cursor.insertText(*(sp->string()));
             break;
-        case DiffLine::Replace:
-            assert(false);
+        case LineType::Replace:
+            cursor.setBlockFormat(m_replaceFormat);
+            cursor.insertText(*(sp->string()));
             break;
         default:
             assert(false);

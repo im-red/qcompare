@@ -24,18 +24,19 @@ public:
 private slots:
     void on_diffButton_clicked();
     void on_editButton_clicked();
+    void on_onlyDiff_toggled(bool checked);
 
 private:
     void enterDiff();
     void enterEdit();
     void doDiff();
-    void showDiff(const DiffText &text);
+    DiffText<QString> calculateDiff(const QStringList &fromList, const QStringList &toList);
+    void showDiff(const DiffText<QString> &text);
     void initWidget();
     void connectScroll();
     void disconnectScroll();
     void initTextFormat();
-
-    void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine>> &lines, QPlainTextEdit *edit);
+    void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>>> &lines, QPlainTextEdit *edit);
 
 private:
     Ui::MainWindow *ui;

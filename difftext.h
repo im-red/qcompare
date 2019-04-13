@@ -6,10 +6,11 @@
 #include <vector>
 #include <memory>
 
+template <typename StringType>
 struct DiffText
 {
-    std::vector<std::shared_ptr<DiffLine>> fromText;
-    std::vector<std::shared_ptr<DiffLine>> toText;
+    std::vector<std::shared_ptr<DiffLine<StringType>>> fromText;
+    std::vector<std::shared_ptr<DiffLine<StringType>>> toText;
 };
 
 #endif // DIFFTEXT_H

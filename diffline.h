@@ -2,36 +2,69 @@
 #define DIFFLINE_H
 
 #include <vector>
-#include <QString>
 #include <memory>
+#include <utility>
 
+enum class LineType
+{
+    Empty,
+    Equal,
+    Add,
+    Remove,
+    Replace
+};
+
+template <typename StringType>
 class DiffLine
 {
 public:
-    enum LineType
+    DiffLine(LineType type)
+        : m_type(type)
     {
-        Empty,
-        Equal,
-        Add,
-        Remove,
-        Replace
-    };
-public:
-    DiffLine(LineType type);
-    ~DiffLine();
+
+    }
+
+    ~DiffLine()
+    {
+
+    }
+
     LineType type() { return m_type; }
     void setType(LineType type) { m_type = type; }
 
-    const std::shared_ptr<QString> string();
-    void setString(const QString &str);
-    const std::shared_ptr<std::vector<int>> subSection();
-    void setSubSection(const std::vector<int> &sections);
-    const std::shared_ptr<std::vector<LineType>> subType();
-    void setSubType(const std::vector<LineType> &types);
+    const std::shared_ptr<StringType> string()
+    {
+        return m_string;
+    }
+
+    void setString(const StringType &str)
+    {
+        m_string = std::make_shared<StringType>(str);
+    }
+
+    const std::shared_ptr<std::vector<int> > subSection()
+    {
+        return m_subSection;
+    }
+
+    void setSubSection(const std::vector<int> &sections)
+    {
+        m_subSection = std::make_shared<std::vector<int>>(sections);
+    }
+
+    const std::shared_ptr<std::vector<LineType> > subType()
+    {
+        return m_subType;
+    }
+
+    void setSubType(const std::vector<LineType> &types)
+    {
+        m_subType = std::make_shared<std::vector<LineType>>(types);
+    }
 
 private:
     LineType m_type;
-    std::shared_ptr<QString> m_string;
+    std::shared_ptr<StringType> m_string;
     std::shared_ptr<std::vector<int>> m_subSection;
     std::shared_ptr<std::vector<LineType>> m_subType;
 };
