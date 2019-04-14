@@ -36,7 +36,8 @@ HEADERS += \
     comparefunction.h \
     lcslength.h \
     editdistance.h \
-    costfunction.h
+    costfunction.h \
+    linediff.h
 
 FORMS += \
         mainwindow.ui

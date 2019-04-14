@@ -11,7 +11,8 @@ enum class LineType
     Equal,
     Add,
     Remove,
-    Replace
+    Replace,
+    Invalid
 };
 
 template <typename StringType>

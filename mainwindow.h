@@ -37,6 +37,7 @@ private:
     void disconnectScroll();
     void initTextFormat();
     void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>>> &lines, QPlainTextEdit *edit);
+    void setReplaceLine(QTextCursor &cursor, const std::shared_ptr<DiffLine<QString>> &line);
 
 private:
     Ui::MainWindow *ui;
@@ -55,6 +56,10 @@ private:
     QTextBlockFormat m_removeFormat;
     QTextBlockFormat m_replaceFormat;
     QTextBlockFormat m_emptyFormat;
+
+    QTextCharFormat m_equalCharFormat;
+    QTextCharFormat m_addCharFormat;
+    QTextCharFormat m_removeCharFormat;
 
     QMetaObject::Connection m_vLeft2Right;
     QMetaObject::Connection m_vRight2Left;

@@ -11,7 +11,8 @@ enum class EditOperation
     Copy,
     Add,
     Remove,
-    Replace
+    Replace,
+    Invalid
 };
 
 constexpr float ADD_COST = 1.0;

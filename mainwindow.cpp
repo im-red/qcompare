@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "myersdiff.h"
 #include "editdistance.h"
+#include "linediff.h"
 #include <QDebug>
 #include <QAbstractSlider>
 #include <QScrollBar>
@@ -111,6 +112,7 @@ void MainWindow::doDiff()
 
     timer.start();
     auto diffText = calculateDiff(fromList, toList);
+    lineDiff(diffText);
     int diffTime = timer.elapsed();
 
     timer.restart();
@@ -218,6 +220,10 @@ void MainWindow::initTextFormat()
     m_removeFormat.setBackground(QBrush(QColor(0xff, 0xcd, 0xd2)));
     m_replaceFormat.setBackground(QBrush(QColor(0xff, 0xf9, 0xc4)));
     m_emptyFormat.setBackground(QBrush(QColor(0xe0, 0xe0, 0xe0)));
+
+    m_equalCharFormat.setBackground(QBrush(Qt::transparent));
+    m_addCharFormat.setBackground(QBrush(QColor(0xa5, 0xd6, 0xa7)));
+    m_removeCharFormat.setBackground(QBrush(QColor(0xef, 0x9a, 0x9a)));
 }
 
 void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>> > &lines, QPlainTextEdit *edit)
@@ -250,7 +256,7 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QS
             break;
         case LineType::Replace:
             cursor.setBlockFormat(m_replaceFormat);
-            cursor.insertText(*(sp->string()));
+            setReplaceLine(cursor, sp);
             break;
         default:
             assert(false);
@@ -263,4 +269,48 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QS
     }
 
     cursor.endEditBlock();
+}
+
+void MainWindow::setReplaceLine(QTextCursor &cursor, const std::shared_ptr<DiffLine<QString> > &line)
+{
+    auto subSection = line->subSection();
+    auto subType = line->subType();
+    int subLen = subSection->size();
+
+    auto str = line->string();
+
+    // ignore the LineType::Invalid in beginning
+    for (int i = 1; i < subLen; i++)
+    {
+        auto curType = subType->at(i);
+        int beginIndex = subSection->at(i);
+        int endIndex;
+        if (i == subLen - 1)
+        {
+            endIndex = str->size();
+        }
+        else
+        {
+            endIndex = subSection->at(i + 1);
+        }
+        if (curType == LineType::Equal)
+        {
+            cursor.setCharFormat(m_equalCharFormat);
+        }
+        else if (curType == LineType::Add)
+        {
+            cursor.setCharFormat(m_addCharFormat);
+        }
+        else if (curType == LineType::Remove)
+        {
+            cursor.setCharFormat(m_removeCharFormat);
+        }
+        else
+        {
+            assert(false);
+        }
+
+        cursor.insertText(str->mid(beginIndex, endIndex - beginIndex));
+    }
+    cursor.setCharFormat(m_equalCharFormat);
 }
