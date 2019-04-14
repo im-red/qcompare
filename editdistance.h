@@ -113,6 +113,7 @@ std::vector<EditOperation> editOperations(const StringContainer &fromList, const
     {
         result[k] = rresult[opLen - 1 - k];
     }
+
     return std::move(result);
 }
 

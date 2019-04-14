@@ -24,6 +24,23 @@ MainWindow::MainWindow(QWidget *parent)
 
     initWidget();
     initTextFormat();
+
+#ifdef PROFILE
+    QFile fromFile("../test/benchmark2a.txt");
+    QFile toFile("../test/benchmark2b.txt");
+
+    fromFile.open(QIODevice::ReadOnly | QIODevice::Text);
+    toFile.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    QString fromList = fromFile.readAll();
+    QString toList = toFile.readAll();
+
+    ui->leftEdit->setPlainText(fromList);
+    ui->rightEdit->setPlainText(toList);
+
+    on_diffButton_clicked();
+    exit(0);
+#endif
 }
 
 MainWindow::~MainWindow()

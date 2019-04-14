@@ -32,6 +32,8 @@ CompareResult lcsCompare(const StringType &from, const StringType &to)
     const int lcs = lcsLength(from, to);
     const int fromLen = from.size();
     const int toLen = to.size();
+    const int totalLen = fromLen + toLen;
+    const int diffLen = totalLen - lcs * 2;
 
     constexpr double SIMILAR_THRESHOLD = 0.6;
     if (lcs == fromLen && lcs == toLen)
@@ -44,8 +46,7 @@ CompareResult lcsCompare(const StringType &from, const StringType &to)
     }
     else
     {
-        const int minLength = std::min(fromLen, toLen);
-        if (lcs * 1.0 / minLength >= SIMILAR_THRESHOLD)
+        if (diffLen * 1.0 / totalLen <= SIMILAR_THRESHOLD)
         {
             return CompareResult::Similar;
         }
@@ -89,6 +90,8 @@ CompareResult affixCompare(const StringType &from, const StringType &to)
     }
 
     const int affixLen = std::min({fromLen, toLen, prefixLen + suffixLen});
+    const int totalLen = fromLen + toLen;
+    const int diffLen = totalLen - affixLen * 2;
     constexpr double SIMILAR_THRESHOLD = 0.6;
     if (affixLen == fromLen && affixLen == toLen)
     {
@@ -100,8 +103,7 @@ CompareResult affixCompare(const StringType &from, const StringType &to)
     }
     else
     {
-        const int minLength = std::min(fromLen, toLen);
-        if (affixLen * 1.0 / minLength >= SIMILAR_THRESHOLD)
+        if (diffLen * 1.0 / totalLen <= SIMILAR_THRESHOLD)
         {
             return CompareResult::Similar;
         }
