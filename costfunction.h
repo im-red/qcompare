@@ -43,21 +43,6 @@ float lcsCost(const StringType &from, const StringType &to)
 
     const float diffRatio = diffLen * 1.0 / totalLen;
 
-    constexpr float MIN_THRESHOLD = 0.2;
-    constexpr float MAX_THRESHOLD = 0.6;
-    constexpr float GRADIENT = (MAX_COST - MIN_COST) / (MAX_THRESHOLD - MIN_THRESHOLD);
-
-    if (diffRatio <= MIN_THRESHOLD)
-    {
-        return MIN_COST;
-    }
-    else if (diffRatio >= MAX_THRESHOLD)
-    {
-        return MAX_COST;
-    }
-    else
-    {
-        return (diffRatio - MIN_THRESHOLD) * GRADIENT;
-    }
+    return MIN_COST + (1 - (diffRatio - 1) * (diffRatio - 1)) * (MAX_COST - MIN_COST);
 }
 #endif // COSTFUNCTION_H
