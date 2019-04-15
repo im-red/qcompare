@@ -116,8 +116,17 @@ void MainWindow::enterDiff()
 
 void MainWindow::enterEdit()
 {
-    ui->leftEdit->setPlainText(m_leftPlainText);
-    ui->rightEdit->setPlainText(m_rightPlainText);
+    ui->leftEdit->clear();
+    ui->rightEdit->clear();
+
+    QTextCursor leftCursor(ui->leftEdit->document());
+    QTextCursor rightCursor(ui->rightEdit->document());
+
+    leftCursor.setCharFormat(m_equalCharFormat);
+    rightCursor.setCharFormat(m_equalCharFormat);
+
+    leftCursor.insertText(m_leftPlainText);
+    rightCursor.insertText(m_rightPlainText);
 }
 
 void MainWindow::doDiff()
