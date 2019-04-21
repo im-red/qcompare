@@ -26,7 +26,8 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    textedit.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -37,7 +38,8 @@ HEADERS += \
     lcslength.h \
     editdistance.h \
     costfunction.h \
-    linediff.h
+    linediff.h \
+    textedit.h
 
 FORMS += \
         mainwindow.ui

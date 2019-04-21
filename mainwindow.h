@@ -11,7 +11,7 @@ namespace Ui {
 class MainWindow;
 }
 
-class QPlainTextEdit;
+class TextEdit;
 
 class MainWindow : public QMainWindow
 {
@@ -36,7 +36,7 @@ private:
     void connectScroll();
     void disconnectScroll();
     void initTextFormat();
-    void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>>> &lines, QPlainTextEdit *edit);
+    void setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>>> &lines, TextEdit *edit);
     void setReplaceLine(QTextCursor &cursor, const std::shared_ptr<DiffLine<QString>> &line);
 
 private:

@@ -112,6 +112,8 @@ void MainWindow::enterDiff()
     statusBar()->showMessage(QString("read time: %1s").arg(readTime * 0.001));
 
     doDiff();
+    ui->leftEdit->setInDiffMode(true);
+    ui->rightEdit->setInDiffMode(true);
 }
 
 void MainWindow::enterEdit()
@@ -127,6 +129,9 @@ void MainWindow::enterEdit()
 
     leftCursor.insertText(m_leftPlainText);
     rightCursor.insertText(m_rightPlainText);
+
+    ui->leftEdit->setInDiffMode(false);
+    ui->rightEdit->setInDiffMode(false);
 }
 
 void MainWindow::doDiff()
@@ -252,7 +257,7 @@ void MainWindow::initTextFormat()
     m_removeCharFormat.setBackground(QBrush(QColor(0xef, 0x9a, 0x9a)));
 }
 
-void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>> > &lines, QPlainTextEdit *edit)
+void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QString>> > &lines, TextEdit *edit)
 {
     edit->clear();
     QTextCursor cursor(edit->document());
@@ -295,6 +300,24 @@ void MainWindow::setDiffLines2Edit(const std::vector<std::shared_ptr<DiffLine<QS
     }
 
     cursor.endEditBlock();
+
+    std::vector<int> blockRealLineNumber(length);
+    int lineNumber = 1;
+    for (int i = 0; i < length; i++)
+    {
+        auto &sp = lines[i];
+        if (sp->type() != LineType::Empty)
+        {
+            blockRealLineNumber[i] = lineNumber;
+            lineNumber++;
+        }
+        else
+        {
+            blockRealLineNumber[i] = -1;
+        }
+    }
+
+    edit->setBlockRealLineNumber(blockRealLineNumber);
 }
 
 void MainWindow::setReplaceLine(QTextCursor &cursor, const std::shared_ptr<DiffLine<QString> > &line)
